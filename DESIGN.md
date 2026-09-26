@@ -249,6 +249,30 @@ Future versions could evolve the system by adding persistent storage, SQL, APIs,
 
 These features are outside the scope of Version 1.
 
+## 12a.Alternatives Considered
+
+### Data Structure
+A dictionary keyed by task ID was considered instead of a list. A list was chosen because Version 1 is a small CLI application and the number of tasks is expected to be small.
+
+### Task ID
+Using UUIDs was considered for task IDs. Sequential integers were chosen because they are simpler for CLI users to read and enter.
+
+### Task Representation
+Using dictionaries instead of a `Task` class was considered. A `Task` class was chosen to keep task information structured and make the design easier to extend.
+
+## 12b.Surviving Application Restarts
+
+Version 1 stores tasks only in memory, so all tasks are lost when the application exits.
+
+To make tasks survive application restarts:
+
+- The in-memory list would need to be replaced with persistent storage such as a JSON file or SQLite database.
+- The application would need to load existing tasks when it starts.
+- Create, update, delete, and complete operations would need to save changes to persistent storage.
+- The next task ID would need to be calculated from the stored tasks instead of starting from 1 every time.
+
+Persistent storage is intentionally outside the scope of Version 1.
+
 ## 13.Summary
 
 Version 1 will be a simple Python CLI Task Manager using an in-memory list.
