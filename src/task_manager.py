@@ -3,8 +3,9 @@ from .database import get_connection
 
 
 class TaskManager:
-    def __init__(self):
+    def __init__(self, user_id):
         self.connection = get_connection()
+        self.user_id = user_id
 
     def create_task(self, title, description=""):
         if not title.strip():
@@ -13,11 +14,16 @@ class TaskManager:
         cursor = self.connection.cursor()
 
         query = """
-            INSERT INTO tasks (title, description, status)
-            VALUES (%s, %s, %s)
+            INSERT INTO tasks (title, description, status, user_id)
+            VALUES (%s, %s, %s, %s)
         """
 
-        values = (title.strip(), description.strip(), "in_progress")
+        values = (
+            title.strip(),
+            description.strip(),
+            "in_progress",
+            self.user_id,
+        )
 
         cursor.execute(query, values)
         self.connection.commit()
@@ -26,7 +32,7 @@ class TaskManager:
 
         cursor.close()
 
-        return Task(task_id, title.strip(), description.strip())
+        return self.get_task(task_id)
 
     def list_tasks(self):
         cursor = self.connection.cursor()
@@ -34,9 +40,10 @@ class TaskManager:
         query = """
             SELECT id, title, description, status, created_at
             FROM tasks
+            WHERE user_id = %s
         """
 
-        cursor.execute(query)
+        cursor.execute(query, (self.user_id,))
 
         rows = cursor.fetchall()
 
@@ -58,10 +65,10 @@ class TaskManager:
         query = """
             SELECT id, title, description, status, created_at
             FROM tasks
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
         """
 
-        cursor.execute(query, (task_id,))
+        cursor.execute(query, (task_id, self.user_id))
 
         row = cursor.fetchone()
 
@@ -101,14 +108,22 @@ class TaskManager:
             SET title = %s,
                 description = %s,
                 status = %s
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
         """
 
         new_title = title if title is not None else task.title
-        new_description = description if description is not None else task.description
+        new_description = (
+            description if description is not None else task.description
+        )
         new_status = status if status is not None else task.status
 
-        values = (new_title, new_description, new_status, task_id)
+        values = (
+            new_title,
+            new_description,
+            new_status,
+            task_id,
+            self.user_id,
+        )
 
         cursor.execute(query, values)
         self.connection.commit()
@@ -125,9 +140,12 @@ class TaskManager:
 
         cursor = self.connection.cursor()
 
-        query = "DELETE FROM tasks WHERE id = %s"
+        query = """
+            DELETE FROM tasks
+            WHERE id = %s AND user_id = %s
+        """
 
-        cursor.execute(query, (task_id,))
+        cursor.execute(query, (task_id, self.user_id))
         self.connection.commit()
 
         cursor.close()
@@ -145,10 +163,14 @@ class TaskManager:
         query = """
             UPDATE tasks
             SET status = %s
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
         """
 
-        cursor.execute(query, ("completed", task_id))
+        cursor.execute(
+            query,
+            ("completed", task_id, self.user_id),
+        )
+
         self.connection.commit()
 
         cursor.close()
@@ -166,13 +188,19 @@ class TaskManager:
         query = """
             SELECT id, title, description, status, created_at
             FROM tasks
-            WHERE LOWER(title) LIKE %s
-               OR LOWER(description) LIKE %s
+            WHERE user_id = %s
+              AND (
+                  LOWER(title) LIKE %s
+                  OR LOWER(description) LIKE %s
+              )
         """
 
         search_value = "%" + keyword + "%"
 
-        cursor.execute(query, (search_value, search_value))
+        cursor.execute(
+            query,
+            (self.user_id, search_value, search_value),
+        )
 
         rows = cursor.fetchall()
 

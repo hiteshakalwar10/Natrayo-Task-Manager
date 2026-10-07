@@ -1,4 +1,5 @@
 from src.task_manager import TaskManager
+from src.auth import AuthManager
 
 
 def display_task(task):
@@ -28,11 +29,10 @@ def get_task_id():
             print("Invalid task ID. Please enter a number.")
 
 
-def main():
-    manager = TaskManager()
-
+def task_menu(manager, user):
     while True:
         print("\n===== NATRAYO TASK MANAGER =====")
+        print(f"Logged in as: {user['username']}")
         print("1. Create Task")
         print("2. List All Tasks")
         print("3. Get Task")
@@ -40,7 +40,7 @@ def main():
         print("5. Delete Task")
         print("6. Complete Task")
         print("7. Search Tasks")
-        print("8. Exit")
+        print("8. Logout")
 
         choice = input("Enter your choice: ").strip()
 
@@ -149,13 +149,55 @@ def main():
             display_tasks(results)
 
         elif choice == "8":
-            print("Exiting NATRAYO Task Manager.")
+            print("Logged out successfully.")
             break
 
         else:
             print("Invalid choice. Please select an option from 1 to 8.")
 
 
+def main():
+    auth = AuthManager()
+
+    while True:
+        print("\n===== NATRAYO =====")
+        print("1. Signup")
+        print("2. Login")
+        print("3. Exit")
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            username = input("Enter username: ").strip()
+            password = input("Enter password: ")
+
+            try:
+                user_id = auth.signup(username, password)
+                print(f"Signup successful. Your user ID is {user_id}.")
+            except ValueError as error:
+                print(f"Signup failed: {error}")
+
+        elif choice == "2":
+            username = input("Enter username: ").strip()
+            password = input("Enter password: ")
+
+            user = auth.login(username, password)
+
+            if user is None:
+                print("Invalid username or password.")
+            else:
+                print(f"\nLogin successful. Welcome, {user['username']}!")
+
+                manager = TaskManager(user["id"])
+                task_menu(manager, user)
+
+        elif choice == "3":
+            print("Exiting NATRAYO.")
+            break
+
+        else:
+            print("Invalid choice. Please select 1, 2, or 3.")
+
+
 if __name__ == "__main__":
     main()
-
