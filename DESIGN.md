@@ -182,7 +182,7 @@ Responsible for storing tasks in an in-memory list.
 Responsible for checking user input and preventing invalid operations.
 
 ### Output
-Responsible for displaying task information, success messages, and error messages to the user.
+Responsible for displaying task information, success messages and error messages to the user.
 
 ## 10.Task Operations
 
